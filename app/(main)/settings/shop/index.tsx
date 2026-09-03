@@ -242,7 +242,6 @@ const ShopScreen = () => {
 
       const asset = result.assets[0];
 
-      // Vérification de la taille
       if (asset.fileSize !== undefined && asset.fileSize > MAX_LOGO_SIZE) {
         Alert.alert(
           "Image trop volumineuse",
@@ -251,7 +250,8 @@ const ShopScreen = () => {
         return;
       }
 
-      // Upload uniquement si l'image respecte la limite
+      setIsPickingLogo(true);
+
       await updateShopLogo(asset.uri);
 
       Alert.alert(
@@ -259,6 +259,8 @@ const ShopScreen = () => {
         "Le logo de votre boutique a été mis à jour.",
       );
     } catch (error: any) {
+      console.error("Change shop logo error:", error);
+
       const message =
         error?.response?.data?.message || "Impossible de modifier le logo.";
 

@@ -30,7 +30,9 @@ interface UserState {
   }) => Promise<void>;
 
   setUser: (user: User) => void;
+  refreshUser: () => Promise<void>;
   setToken: (token: string) => void;
+  clearSession: () => void;
   initialize: () => void;
 }
 
@@ -144,27 +146,56 @@ export const useUserStore = create<UserState>()(
       },
 
       // UPDATE PROFILE IMAGE
-      updateProfileImage: async (image) => {
+      // updateProfileImage: async (image) => {
+      //   try {
+      //     set({ isLoading: true });
+
+      //     const token = get().token;
+
+      //     if (!token) {
+      //       throw new Error("Utilisateur non authentifié.");
+      //     }
+
+      //     const response = await api.patch(
+      //       "/profile/image",
+      //       {
+      //         image,
+      //       },
+      //       {
+      //         headers: {
+      //           Authorization: `Bearer ${token}`,
+      //         },
+      //       },
+      //     );
+
+      //     const updatedUser = response.data.user;
+
+      //     set({
+      //       user: updatedUser,
+      //       isLoading: false,
+      //     });
+      //   } catch (error) {
+      //     set({
+      //       isLoading: false,
+      //     });
+
+      //     throw error;
+      //   }
+      // },
+
+      updateProfileImage: async (imageUri) => {
         try {
           set({ isLoading: true });
 
-          const token = get().token;
+          const formData = new FormData();
 
-          if (!token) {
-            throw new Error("Utilisateur non authentifié.");
-          }
+          formData.append("image", {
+            uri: imageUri,
+            name: "profile.jpg",
+            type: "image/jpeg",
+          } as any);
 
-          const response = await api.patch(
-            "/profile/image",
-            {
-              image,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          );
+          const response = await api.patch("/profile/image", formData);
 
           const updatedUser = response.data.user;
 
@@ -173,10 +204,7 @@ export const useUserStore = create<UserState>()(
             isLoading: false,
           });
         } catch (error) {
-          set({
-            isLoading: false,
-          });
-
+          set({ isLoading: false });
           throw error;
         }
       },
@@ -252,6 +280,25 @@ export const useUserStore = create<UserState>()(
       setToken: (token) => {
         set({
           token,
+        });
+      },
+
+      // REFRESH USER DATA
+      refreshUser: async () => {
+        const response = await api.get("/profile");
+
+        set({
+          user: response.data.user,
+        });
+      },
+
+      // CLEAR SESSION
+      clearSession: () => {
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
         });
       },
 

@@ -19,7 +19,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/userStore";
 import { COLORS, fonts, typography } from "@/utils/styles";
-import { uploadProfileImage } from "@/utils/uploadProfileImage";
 
 type ProfileField = "name" | "telephone" | "email";
 
@@ -134,9 +133,9 @@ const ProfileScreen = () => {
 
       setIsUploadingImage(true);
 
-      const imageUrl = await uploadProfileImage(asset.uri, user.id);
-
-      await updateProfileImage(imageUrl);
+      // L'image est envoyée directement au serveur Next.js.
+      // Le serveur se charge ensuite de l'envoyer à Cloudinary.
+      await updateProfileImage(asset.uri);
 
       Alert.alert("Photo modifiée", "Votre photo de profil a été mise à jour.");
     } catch (error: any) {

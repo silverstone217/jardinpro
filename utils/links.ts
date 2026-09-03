@@ -56,7 +56,7 @@ export const LINKS_SETTINGS: SettingsLink[] = [
 
   {
     label: "Personnel",
-    value: "/settings/personnel",
+    value: "/settings/employees",
     description: "Gérer les employés et leurs affectations",
     icon: "users",
     section: "business",

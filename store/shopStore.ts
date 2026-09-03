@@ -1,7 +1,6 @@
 import type { CreateShopInput, Shop, UpdateShopInput } from "@/types/shop";
 
 import { api } from "@/utils/api";
-import { uploadShopLogo } from "@/utils/uploadShopLogo";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -76,10 +75,6 @@ export const useShopStore = create<ShopState>()(
 
           // -----------------------------------------------------
           // Protection côté client
-          //
-          // La vraie protection reste côté serveur.
-          // Le singleton Prisma garantit également
-          // qu'une seule boutique peut exister.
           // -----------------------------------------------------
 
           if (get().shop) {
@@ -92,10 +87,7 @@ export const useShopStore = create<ShopState>()(
           });
 
           // =====================================================
-          // ÉTAPE 1
-          // Création de la boutique
-          //
-          // Le serveur crée la boutique avec le logo par défaut.
+          // ÉTAPE 1 — Création de la boutique
           // =====================================================
 
           const response = await api.post<{
@@ -104,18 +96,13 @@ export const useShopStore = create<ShopState>()(
 
           const createdShop = response.data.shop;
 
-          // -----------------------------------------------------
-          // On sauvegarde immédiatement la boutique.
-          // Cela permet notamment d'avoir son ID.
-          // -----------------------------------------------------
-
+          // On sauvegarde immédiatement la boutique
           set({
             shop: createdShop,
           });
 
           // =====================================================
-          // ÉTAPE 2
-          // Upload du logo
+          // ÉTAPE 2 — Upload du logo
           // =====================================================
 
           if (logoUri) {
@@ -124,33 +111,20 @@ export const useShopStore = create<ShopState>()(
             });
 
             try {
-              /**
-               * Expo
-               *   ↓
-               * Firebase Storage
-               *   ↓
-               * downloadURL
-               */
-              const logoUrl = await uploadShopLogo(logoUri, createdShop.id);
+              const formData = new FormData();
 
-              // =================================================
-              // ÉTAPE 3
-              //
-              // On envoie UNIQUEMENT l'URL à Next.js.
-              //
-              // L'image ne passe jamais par Next.js.
-              // =================================================
+              formData.append("logo", {
+                uri: logoUri,
+                name: "shop-logo.jpg",
+                type: "image/jpeg",
+              } as any);
 
+              // Expo → Next.js → Cloudinary
               const logoResponse = await api.patch<{
                 shop: Shop;
-              }>(`/shop/logo`, {
-                logo: logoUrl,
-              });
+              }>("/shop/logo", formData);
 
-              // -------------------------------------------------
-              // Mise à jour locale avec la nouvelle boutique
-              // -------------------------------------------------
-
+              // Mise à jour locale
               set({
                 shop: logoResponse.data.shop,
               });
@@ -304,18 +278,26 @@ export const useShopStore = create<ShopState>()(
         });
 
         try {
-          // 1. Expo → Supabase
-          const logoUrl = await uploadShopLogo(logoUri, shop.id);
+          // ============================================================
+          // EXPO → NEXT.JS → CLOUDINARY
+          // ============================================================
 
-          // 2. Expo → Next.js
-          // api doit automatiquement envoyer le JWT
+          const formData = new FormData();
+
+          formData.append("logo", {
+            uri: logoUri,
+            name: "shop-logo.jpg",
+            type: "image/jpeg",
+          } as any);
+
           const response = await api.patch<{
             shop: Shop;
-          }>("/shop/logo", {
-            logo: logoUrl,
-          });
+          }>("/shop/logo", formData);
 
-          // 3. Mise à jour locale
+          // ============================================================
+          // MISE À JOUR LOCALE
+          // ============================================================
+
           set({
             shop: response.data.shop,
           });

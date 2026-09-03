@@ -1,4 +1,5 @@
 // import { useUserStore } from "@/store/userStore";
+import { useUserStore } from "@/store/userStore";
 import { COLORS } from "@/utils/styles";
 import {
   Manrope_300Light,
@@ -11,7 +12,7 @@ import {
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useCallback, useEffect, useState } from "react";
-import { StatusBar, View } from "react-native";
+import { AppState, StatusBar, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Le splash peut déjà être contrôlé par Expo.
@@ -30,6 +31,8 @@ export default function RootLayout() {
 
   const [minimumTimePassed, setMinimumTimePassed] = useState(false);
 
+  const refreshUser = useUserStore((state) => state.refreshUser);
+
   /**
    * Garde le splash affiché pendant au moins 4 secondes.
    */
@@ -40,6 +43,24 @@ export default function RootLayout() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    // Synchronisation au démarrage
+    refreshUser().catch((error) => {
+      console.log("Synchronisation utilisateur échouée :", error);
+    });
+
+    // Synchronisation lorsque l'application revient au premier plan
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        refreshUser().catch((error) => {
+          console.log("Synchronisation utilisateur échouée :", error);
+        });
+      }
+    });
+
+    return () => subscription.remove();
+  }, [refreshUser]);
 
   const appReady = fontsLoaded && minimumTimePassed;
 
