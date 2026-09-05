@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -52,9 +52,9 @@ const EmployeeProfileScreen = () => {
 
   const employee = employees.find((item) => item.id === employeeId);
 
-  const [name, setName] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(employee?.name ?? "");
+  const [telephone, setTelephone] = useState(employee?.telephone ?? "");
+  const [email, setEmail] = useState(employee?.email ?? "");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -66,20 +66,6 @@ const EmployeeProfileScreen = () => {
 
   const [profileError, setProfileError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-
-  /*
-   * ============================================================
-   * INITIALISATION
-   * ============================================================
-   */
-
-  useEffect(() => {
-    if (!employee) return;
-
-    setName(employee.name ?? "");
-    setTelephone(employee.telephone ?? "");
-    setEmail(employee.email ?? "");
-  }, [employee]);
 
   /*
    * ============================================================

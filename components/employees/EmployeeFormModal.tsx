@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -12,7 +13,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useEmployeeStore } from "@/store/employeeStore";
 import { COLORS, fonts } from "@/utils/styles";
@@ -41,19 +41,8 @@ const EmployeeFormModal = ({
   const [name, setName] = useState("");
   const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
-
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState("");
-
-  /**
-   * Réinitialise les erreurs lorsque le modal s'ouvre.
-   */
-  useEffect(() => {
-    if (visible) {
-      setErrors({});
-      setSubmitError("");
-    }
-  }, [visible]);
 
   /**
    * Réinitialise complètement le formulaire.
@@ -420,7 +409,7 @@ const styles = StyleSheet.create({
   },
 
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
 

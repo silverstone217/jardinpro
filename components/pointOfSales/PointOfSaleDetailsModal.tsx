@@ -1,19 +1,19 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React from "react";
 import {
   ActivityIndicator,
   Alert,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
-import type { PointOfSale } from "@/types/pointOfSale";
-
 import { usePointOfSaleStore } from "@/store/pointOfSaleStore";
+import type { PointOfSale } from "@/types/pointOfSale";
 import { COLORS, fonts } from "@/utils/styles";
+import PointOfSaleAssignEmployeePopup from "./PointOfSaleAssignEmployeePopup";
 
 type PointOfSaleDetailsModalProps = {
   visible: boolean;
@@ -36,14 +36,31 @@ const PointOfSaleDetailsModal = ({
 
   const isActive = pointOfSale.isActive;
 
-  //   const handleToggleStatus = async () => {
-  //     try {
-  //       await updatePointOfSaleStatus(pointOfSale.id, !isActive);
-  //     } catch (error) {
-  //       console.error("Erreur lors de la modification du statut :", error);
-  //     }
-  //   };
+  /**
+   * Ferme le modal de détails.
+   */
+  const handleClose = () => {
+    if (isUpdatingStatus) {
+      return;
+    }
 
+    onClose();
+  };
+
+  /**
+   * Modification du statut du point de vente.
+   */
+  const updateStatus = async (status: boolean) => {
+    try {
+      await updatePointOfSaleStatus(pointOfSale.id, status);
+    } catch (error) {
+      console.error("Erreur lors de la modification du statut :", error);
+    }
+  };
+
+  /**
+   * Active ou désactive le point de vente.
+   */
   const handleToggleStatus = () => {
     if (!isActive) {
       updateStatus(true);
@@ -67,189 +84,217 @@ const PointOfSaleDetailsModal = ({
     );
   };
 
-  const updateStatus = async (status: boolean) => {
-    try {
-      await updatePointOfSaleStatus(pointOfSale.id, status);
-    } catch (error) {
-      console.error("Erreur lors de la modification du statut :", error);
-    }
-  };
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+    <>
+      {/* =====================================================
+          MODAL PRINCIPAL — DÉTAILS DU POINT DE VENTE
+      ====================================================== */}
 
-        <View style={styles.container}>
-          <View style={styles.handle} />
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleClose}
+      >
+        <View style={styles.overlay}>
+          <Pressable style={styles.backdrop} onPress={handleClose} />
 
-          <View style={styles.header}>
-            <View style={styles.titleSection}>
-              <View
-                style={[
-                  styles.iconContainer,
-                  !isActive && styles.inactiveIconContainer,
-                ]}
-              >
+          <View style={styles.container}>
+            {/* Handle */}
+            <View style={styles.handle} />
+
+            {/* =================================================
+                HEADER
+            ================================================== */}
+
+            <View style={styles.header}>
+              <View style={styles.headerIcon}>
                 <MaterialCommunityIcons
                   name="storefront-outline"
-                  size={27}
-                  color={isActive ? COLORS.primary : COLORS.Gray}
+                  size={24}
+                  color={COLORS.primary}
                 />
               </View>
 
-              <View style={styles.titleContent}>
-                <Text style={styles.title} numberOfLines={2}>
+              <View style={styles.headerContent}>
+                <Text style={styles.headerTitle} numberOfLines={1}>
                   {pointOfSale.name}
                 </Text>
 
-                <View style={styles.codeRow}>
-                  <MaterialCommunityIcons
-                    name="tag-outline"
-                    size={14}
-                    color={COLORS.Gray}
-                  />
+                <Text style={styles.headerSubtitle}>
+                  Point de vente • {pointOfSale.code}
+                </Text>
+              </View>
 
-                  <Text style={styles.code}>{pointOfSale.code}</Text>
+              <Pressable
+                onPress={handleClose}
+                style={({ pressed }) => [
+                  styles.closeButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="close"
+                  size={21}
+                  color={COLORS.Gray}
+                />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+            >
+              {/* =================================================
+                  STATUT
+              ================================================== */}
+
+              <View
+                style={[
+                  styles.statusBanner,
+                  isActive
+                    ? styles.statusBannerActive
+                    : styles.statusBannerInactive,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.statusIcon,
+                    isActive
+                      ? styles.statusIconActive
+                      : styles.statusIconInactive,
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={
+                      isActive ? "check-circle-outline" : "pause-circle-outline"
+                    }
+                    size={19}
+                    color={isActive ? COLORS.primary : "#B45309"}
+                  />
+                </View>
+
+                <View style={styles.statusContent}>
+                  <Text style={styles.statusTitle}>
+                    {isActive
+                      ? "Point de vente actif"
+                      : "Point de vente inactif"}
+                  </Text>
+
+                  <Text style={styles.statusDescription}>
+                    {isActive
+                      ? "Ce point de vente est actuellement opérationnel."
+                      : "Ce point de vente n'est actuellement pas opérationnel."}
+                  </Text>
                 </View>
               </View>
-            </View>
 
-            <Pressable
-              onPress={onClose}
-              style={styles.closeButton}
-              hitSlop={10}
-            >
-              <MaterialCommunityIcons
-                name="close"
-                size={21}
-                color={COLORS.darkGray}
-              />
-            </Pressable>
-          </View>
+              {/* =================================================
+                  INFORMATIONS
+              ================================================== */}
 
-          <View
-            style={[
-              styles.statusBanner,
-              isActive ? styles.activeBanner : styles.inactiveBanner,
-            ]}
-          >
-            <View
-              style={[
-                styles.statusIcon,
-                isActive ? styles.activeStatusIcon : styles.inactiveStatusIcon,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={
-                  isActive ? "check-circle-outline" : "pause-circle-outline"
-                }
-                size={19}
-                color={isActive ? COLORS.success : COLORS.Gray}
-              />
-            </View>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Informations</Text>
 
-            <View style={styles.statusContent}>
-              <Text
-                style={[
-                  styles.statusTitle,
-                  isActive
-                    ? styles.activeStatusText
-                    : styles.inactiveStatusText,
-                ]}
-              >
-                {isActive ? "Point de vente actif" : "Point de vente inactif"}
-              </Text>
+                <View style={styles.infoCard}>
+                  <InfoRow
+                    icon="store-outline"
+                    label="Nom"
+                    value={pointOfSale.name}
+                  />
 
-              <Text style={styles.statusDescription}>
-                {isActive
-                  ? "Ce point de vente est actuellement opérationnel."
-                  : "Ce point de vente n'est actuellement pas opérationnel."}
-              </Text>
-            </View>
-          </View>
+                  <InfoRow
+                    icon="identifier"
+                    label="Code"
+                    value={pointOfSale.code}
+                  />
 
-          <View style={styles.informationSection}>
-            <Text style={styles.sectionTitle}>Informations</Text>
+                  <InfoRow
+                    icon="phone-outline"
+                    label="Téléphone"
+                    value={pointOfSale.telephone || "Non renseigné"}
+                  />
 
-            <InfoRow
-              icon="store-outline"
-              label="Nom"
-              value={pointOfSale.name}
-            />
+                  <InfoRow
+                    icon="map-marker-outline"
+                    label="Adresse"
+                    value={pointOfSale.address || "Non renseignée"}
+                    isLast
+                  />
+                </View>
+              </View>
 
-            <InfoRow icon="tag-outline" label="Code" value={pointOfSale.code} />
+              {/* =====================================================
+                     PERSONNEL
+                ====================================================== */}
 
-            <InfoRow
-              icon="phone-outline"
-              label="Téléphone"
-              value={pointOfSale.telephone ?? "Non renseigné"}
-            />
+              <PointOfSaleAssignEmployeePopup pointOfSale={pointOfSale} />
 
-            <InfoRow
-              icon="map-marker-outline"
-              label="Adresse"
-              value={pointOfSale.address ?? "Non renseignée"}
-            />
-          </View>
+              {/* =================================================
+                  ACTIONS
+              ================================================== */}
 
-          <View style={styles.actions}>
-            <Pressable
-              onPress={() => onEdit(pointOfSale)}
-              disabled={isUpdatingStatus}
-              style={({ pressed }) => [
-                styles.editButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="pencil-outline"
-                size={19}
-                color={COLORS.primary}
-              />
+              <View style={styles.actions}>
+                <Pressable
+                  onPress={() => onEdit(pointOfSale)}
+                  disabled={isUpdatingStatus}
+                  style={({ pressed }) => [
+                    styles.editButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name="pencil-outline"
+                    size={19}
+                    color={COLORS.primary}
+                  />
 
-              <Text style={styles.editButtonText}>Modifier</Text>
-            </Pressable>
+                  <Text style={styles.editButtonText}>Modifier</Text>
+                </Pressable>
 
-            <Pressable
-              onPress={handleToggleStatus}
-              disabled={isUpdatingStatus}
-              style={({ pressed }) => [
-                styles.statusButton,
-                isActive ? styles.deactivateButton : styles.activateButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              {isUpdatingStatus ? (
-                <ActivityIndicator
-                  size="small"
-                  color={isActive ? COLORS.error : COLORS.success}
-                />
-              ) : (
-                <MaterialCommunityIcons
-                  name={isActive ? "store-off-outline" : "store-check-outline"}
-                  size={19}
-                  color={isActive ? COLORS.error : COLORS.success}
-                />
-              )}
+                <Pressable
+                  onPress={handleToggleStatus}
+                  disabled={isUpdatingStatus}
+                  style={({ pressed }) => [
+                    styles.statusButton,
+                    isActive
+                      ? styles.statusButtonDanger
+                      : styles.statusButtonSuccess,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  {isUpdatingStatus ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={isActive ? "#C0392B" : COLORS.primary}
+                    />
+                  ) : (
+                    <MaterialCommunityIcons
+                      name={
+                        isActive ? "store-off-outline" : "store-check-outline"
+                      }
+                      size={19}
+                      color={isActive ? "#C0392B" : COLORS.primary}
+                    />
+                  )}
 
-              <Text
-                style={[
-                  styles.statusButtonText,
-                  isActive ? styles.deactivateText : styles.activateText,
-                ]}
-              >
-                {isActive ? "Désactiver" : "Activer"}
-              </Text>
-            </Pressable>
+                  <Text
+                    style={[
+                      styles.statusButtonText,
+                      isActive
+                        ? styles.statusButtonDangerText
+                        : styles.statusButtonSuccessText,
+                    ]}
+                  >
+                    {isActive ? "Désactiver" : "Activer"}
+                  </Text>
+                </Pressable>
+              </View>
+            </ScrollView>
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    </>
   );
 };
 
@@ -257,13 +302,14 @@ type InfoRowProps = {
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
   label: string;
   value: string;
+  isLast?: boolean;
 };
 
-const InfoRow = ({ icon, label, value }: InfoRowProps) => {
+const InfoRow = ({ icon, label, value, isLast = false }: InfoRowProps) => {
   return (
-    <View style={styles.infoRow}>
+    <View style={[styles.infoRow, !isLast && styles.infoRowBorder]}>
       <View style={styles.infoIcon}>
-        <MaterialCommunityIcons name={icon} size={18} color={COLORS.Gray} />
+        <MaterialCommunityIcons name={icon} size={19} color={COLORS.primary} />
       </View>
 
       <View style={styles.infoContent}>
@@ -276,8 +322,6 @@ const InfoRow = ({ icon, label, value }: InfoRowProps) => {
     </View>
   );
 };
-
-export default PointOfSaleDetailsModal;
 
 const styles = StyleSheet.create({
   overlay: {
@@ -297,6 +341,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 30,
     paddingTop: 10,
+    maxHeight: "90%",
   },
 
   handle: {
@@ -310,78 +355,64 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
 
-  titleSection: {
-    flex: 1,
-    flexDirection: "row",
+  headerIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EAF4E7",
     marginRight: 12,
   },
 
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 17,
-    backgroundColor: "#EAF4E7",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 13,
-  },
-
-  inactiveIconContainer: {
-    backgroundColor: "#EEEEEE",
-  },
-
-  titleContent: {
+  headerContent: {
     flex: 1,
   },
 
-  title: {
+  headerTitle: {
     fontFamily: fonts.bold,
-    fontSize: 19,
+    fontSize: 18,
     color: COLORS.text,
   },
 
-  codeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    marginTop: 5,
-  },
-
-  code: {
-    fontFamily: fonts.medium,
+  headerSubtitle: {
+    marginTop: 3,
+    fontFamily: fonts.regular,
     fontSize: 12,
-    color: COLORS.Gray,
-    letterSpacing: 0.4,
+    color: COLORS.darkGray,
   },
 
   closeButton: {
     width: 38,
     height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.white,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#F3F3F3",
+  },
+
+  scrollContent: {
+    paddingBottom: 4,
   },
 
   statusBanner: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 16,
-    padding: 13,
-    marginTop: 20,
+    borderRadius: 17,
+    padding: 14,
+    marginBottom: 22,
   },
 
-  activeBanner: {
-    backgroundColor: "#EDF8ED",
+  statusBannerActive: {
+    backgroundColor: "#EDF7EA",
   },
 
-  inactiveBanner: {
-    backgroundColor: "#F1F1F1",
+  statusBannerInactive: {
+    backgroundColor: "#FFF7E8",
   },
 
   statusIcon: {
@@ -393,12 +424,12 @@ const styles = StyleSheet.create({
     marginRight: 11,
   },
 
-  activeStatusIcon: {
-    backgroundColor: "#DDF0DD",
+  statusIconActive: {
+    backgroundColor: "#DCEFD7",
   },
 
-  inactiveStatusIcon: {
-    backgroundColor: "#E4E4E4",
+  statusIconInactive: {
+    backgroundColor: "#FDEBC8",
   },
 
   statusContent: {
@@ -406,52 +437,72 @@ const styles = StyleSheet.create({
   },
 
   statusTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: 13,
-  },
-
-  activeStatusText: {
-    color: COLORS.success,
-  },
-
-  inactiveStatusText: {
-    color: COLORS.darkGray,
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    color: COLORS.text,
   },
 
   statusDescription: {
-    fontFamily: fonts.regular,
-    fontSize: 11,
-    color: COLORS.Gray,
     marginTop: 3,
-    lineHeight: 16,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: COLORS.darkGray,
   },
 
-  informationSection: {
-    marginTop: 22,
+  section: {
+    marginBottom: 22,
   },
 
   sectionTitle: {
     fontFamily: fonts.bold,
-    fontSize: 14,
+    fontSize: 15,
     color: COLORS.text,
-    marginBottom: 7,
+  },
+
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
+  sectionHeaderContent: {
+    flex: 1,
+  },
+
+  sectionSubtitle: {
+    marginTop: 3,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: COLORS.darkGray,
+  },
+
+  infoCard: {
+    marginTop: 11,
+    backgroundColor: COLORS.white,
+    borderRadius: 18,
+    paddingHorizontal: 14,
   },
 
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
+    minHeight: 68,
     paddingVertical: 10,
+  },
+
+  infoRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: "#EEEEEE",
   },
 
   infoIcon: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: 11,
-    backgroundColor: COLORS.white,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#EDF6EA",
     marginRight: 11,
   },
 
@@ -461,21 +512,86 @@ const styles = StyleSheet.create({
 
   infoLabel: {
     fontFamily: fonts.regular,
-    fontSize: 10,
+    fontSize: 11,
     color: COLORS.Gray,
+    marginBottom: 3,
   },
 
   infoValue: {
     fontFamily: fonts.medium,
-    fontSize: 13,
+    fontSize: 14,
     color: COLORS.text,
-    marginTop: 2,
+  },
+
+  staffSection: {
+    marginBottom: 22,
+  },
+
+  emptyStaffCard: {
+    alignItems: "center",
+    backgroundColor: COLORS.white,
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
+  },
+
+  emptyStaffIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F3F4F3",
+    marginBottom: 10,
+  },
+
+  emptyStaffTitle: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    color: COLORS.text,
+    textAlign: "center",
+  },
+
+  emptyStaffText: {
+    marginTop: 5,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: COLORS.Gray,
+    textAlign: "center",
+  },
+
+  addStaffButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 45,
+    paddingHorizontal: 18,
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    marginTop: 15,
+    gap: 7,
+  },
+
+  addStaffButtonText: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: COLORS.white,
+  },
+
+  inactiveStaffText: {
+    marginTop: 14,
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#B45309",
+    textAlign: "center",
   },
 
   actions: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 20,
+    marginTop: 2,
   },
 
   editButton: {
@@ -492,7 +608,7 @@ const styles = StyleSheet.create({
   },
 
   editButtonText: {
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.bold,
     fontSize: 13,
     color: COLORS.primary,
   },
@@ -508,30 +624,32 @@ const styles = StyleSheet.create({
     gap: 7,
   },
 
-  deactivateButton: {
-    backgroundColor: "#FFF0F0",
-    borderColor: "#F5D8D8",
+  statusButtonDanger: {
+    backgroundColor: "#FFF1EF",
+    borderColor: "#F1D2CD",
   },
 
-  activateButton: {
-    backgroundColor: "#EDF8ED",
-    borderColor: "#D8EAD8",
+  statusButtonSuccess: {
+    backgroundColor: "#EAF4E7",
+    borderColor: "#D8E8D4",
   },
 
   statusButtonText: {
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.bold,
     fontSize: 13,
   },
 
-  deactivateText: {
-    color: COLORS.error,
+  statusButtonDangerText: {
+    color: "#C0392B",
   },
 
-  activateText: {
-    color: COLORS.success,
+  statusButtonSuccessText: {
+    color: COLORS.primary,
   },
 
-  buttonPressed: {
-    opacity: 0.72,
+  pressed: {
+    opacity: 0.75,
   },
 });
+
+export default PointOfSaleDetailsModal;

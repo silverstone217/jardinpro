@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -31,15 +31,9 @@ const EmployeeBanModal = ({
   const unbanEmployee = useEmployeeStore((state) => state.unbanEmployee);
   const isBanning = useEmployeeStore((state) => state.isBanning);
 
-  const [banReason, setBanReason] = useState("");
+  const [banReason, setBanReason] = useState(employee?.banReason ?? "");
 
   const isBanned = employee?.isBanned ?? false;
-
-  useEffect(() => {
-    if (visible) {
-      setBanReason(employee?.banReason ?? "");
-    }
-  }, [visible, employee]);
 
   if (!employee) {
     return null;
@@ -317,7 +311,7 @@ const styles = StyleSheet.create({
   },
 
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.48)",
   },
 

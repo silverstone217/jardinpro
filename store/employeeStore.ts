@@ -3,6 +3,7 @@ import {
   Employee,
   UpdateEmployeeInput,
 } from "@/types/employees";
+import { StaffAssignment } from "@/types/staffAssignment";
 import { api } from "@/utils/api";
 import { create } from "zustand";
 
@@ -40,6 +41,10 @@ type EmployeeStore = {
   banEmployee: (employeeId: string, banReason?: string) => Promise<Employee>;
 
   unbanEmployee: (employeeId: string) => Promise<Employee>;
+
+  fetchPointOfSaleAssignments: (
+    pointOfSaleId: string,
+  ) => Promise<StaffAssignment[]>;
 };
 
 export const useEmployeeStore = create<EmployeeStore>((set) => ({
@@ -241,5 +246,19 @@ export const useEmployeeStore = create<EmployeeStore>((set) => ({
 
       throw error;
     }
+  },
+
+  /**
+   * ============================================================
+   * FETCH POINT OF SALE ASSIGNMENTS
+   * ============================================================
+   */
+  fetchPointOfSaleAssignments: async (pointOfSaleId: string) => {
+    const response = await api.get<{
+      message: string;
+      assignments: StaffAssignment[];
+    }>(`/point-of-sales/${pointOfSaleId}/assignments`);
+
+    return response.data.assignments;
   },
 }));

@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -15,6 +16,8 @@ import {
 import { useEmployeeStore } from "@/store/employeeStore";
 import { Employee } from "@/types/employees";
 import { COLORS, fonts } from "@/utils/styles";
+
+import EmployeeAssignmentModal from "./EmployeeAssignmentModal";
 import EmployeeBanModal from "./EmployeeBanModal";
 
 type EmployeeDetailsModalProps = {
@@ -33,41 +36,79 @@ const EmployeeDetailsModal = ({
   const isBanning = useEmployeeStore((state) => state.isBanning);
 
   const [actionError, setActionError] = useState("");
-
   const [banModalVisible, setBanModalVisible] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setActionError("");
-    }
-  }, [visible, employee]);
+  const [assignmentModalVisible, setAssignmentModalVisible] = useState(false);
 
   if (!employee) {
     return null;
   }
 
+  /**
+   * Fermer le modal principal.
+   *
+   * On réinitialise ici les états locaux afin que le modal
+   * soit propre lors de sa prochaine ouverture.
+   */
   const handleClose = () => {
-    if (isBanning) return;
+    if (isBanning) {
+      return;
+    }
 
     Keyboard.dismiss();
+
+    setActionError("");
+    setBanModalVisible(false);
+
     onClose();
   };
 
+  /**
+   * Ouvrir le profil de l'employé.
+   */
   const handleProfilePress = () => {
-    if (isBanning) return;
+    if (isBanning) {
+      return;
+    }
 
     Keyboard.dismiss();
+
+    setActionError("");
+
     onProfilePress?.(employee);
   };
 
+  /**
+   * Ouvrir le modal de bannissement/débannissement.
+   */
   const handleBanToggle = () => {
+    if (isBanning) {
+      return;
+    }
+
+    setActionError("");
     setBanModalVisible(true);
   };
 
+  /**
+   * Fermer le modal de bannissement.
+   */
+  const handleBanModalClose = () => {
+    if (isBanning) {
+      return;
+    }
+
+    setBanModalVisible(false);
+  };
+
+  /**
+   * Suppression volontairement désactivée.
+   *
+   * Cette fonctionnalité pourra être ajoutée plus tard
+   * lorsque la logique métier de suppression sera définie.
+   */
   const handleDeletePress = () => {
     // Désactivé volontairement.
-    // La suppression d'un employé pourra être ajoutée
-    // plus tard si la logique métier le permet.
   };
 
   return (
@@ -82,7 +123,12 @@ const EmployeeDetailsModal = ({
         style={styles.modalRoot}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Pressable style={styles.overlay} onPress={handleClose} />
+        {/* OVERLAY */}
+        <Pressable
+          style={styles.overlay}
+          onPress={handleClose}
+          disabled={isBanning}
+        />
 
         <View style={styles.modalContent}>
           {/* HEADER */}
@@ -90,13 +136,11 @@ const EmployeeDetailsModal = ({
             <View style={styles.headerLeft}>
               <View style={styles.avatarWrapper}>
                 {employee.image ? (
-                  <View style={styles.avatarImageWrapper}>
-                    <View style={styles.avatarImage}>
-                      <Text style={styles.avatarImageText}>
-                        {employee.name.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
+                  <Image
+                    source={{ uri: employee.image }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
                     <Text style={styles.avatarText}>
@@ -181,7 +225,7 @@ const EmployeeDetailsModal = ({
 
           {/* ACTIONS */}
           <View style={styles.actions}>
-            {/* Profil */}
+            {/* PROFIL */}
             <Pressable
               onPress={handleProfilePress}
               disabled={isBanning}
@@ -214,7 +258,38 @@ const EmployeeDetailsModal = ({
               />
             </Pressable>
 
-            {/* Bannir / Débannir */}
+            {/* AFFECTATION */}
+            <Pressable
+              onPress={() => setAssignmentModalVisible(true)}
+              style={({ pressed }) => [
+                styles.actionButton,
+                pressed && styles.actionPressed,
+              ]}
+            >
+              <View style={styles.actionIcon}>
+                <MaterialCommunityIcons
+                  name="map-marker-account-outline"
+                  size={19}
+                  color={COLORS.primary}
+                />
+              </View>
+
+              <View style={styles.actionContent}>
+                <Text style={styles.actionTitle}>Affectation</Text>
+
+                <Text style={styles.actionDescription}>
+                  Gérer le point de vente de cet employé
+                </Text>
+              </View>
+
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={21}
+                color={COLORS.Gray}
+              />
+            </Pressable>
+
+            {/* BANNIR / DÉBANNIR */}
             <Pressable
               onPress={handleBanToggle}
               disabled={isBanning}
@@ -274,7 +349,7 @@ const EmployeeDetailsModal = ({
               )}
             </Pressable>
 
-            {/* Supprimer */}
+            {/* SUPPRIMER */}
             <Pressable
               onPress={handleDeletePress}
               disabled
@@ -310,13 +385,6 @@ const EmployeeDetailsModal = ({
             </Pressable>
           </View>
 
-          {/* BAN MODAL */}
-          <EmployeeBanModal
-            visible={banModalVisible}
-            employee={employee}
-            onClose={() => setBanModalVisible(false)}
-          />
-
           {/* ERROR */}
           {actionError ? (
             <View style={styles.errorBox}>
@@ -329,6 +397,25 @@ const EmployeeDetailsModal = ({
               <Text style={styles.errorText}>{actionError}</Text>
             </View>
           ) : null}
+
+          <EmployeeAssignmentModal
+            visible={assignmentModalVisible}
+            employee={employee}
+            onClose={() => setAssignmentModalVisible(false)}
+          />
+
+          <EmployeeBanModal
+            visible={banModalVisible}
+            employee={employee}
+            onClose={handleBanModalClose}
+          />
+
+          {/* BAN MODAL */}
+          <EmployeeBanModal
+            visible={banModalVisible}
+            employee={employee}
+            onClose={handleBanModalClose}
+          />
 
           {/* FOOTER */}
           <View style={styles.footer}>
@@ -358,7 +445,7 @@ const styles = StyleSheet.create({
   },
 
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
 
@@ -395,15 +482,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
-  avatarImageWrapper: {
-    flex: 1,
-  },
-
   avatarImage: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#E8F2E5",
+    width: "100%",
+    height: "100%",
   },
 
   avatarImageText: {

@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -40,10 +40,10 @@ const PointOfSaleFormModal = ({
   const { createPointOfSale, updatePointOfSale, isCreating, isUpdating } =
     usePointOfSaleStore();
 
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [address, setAddress] = useState("");
+  const [name, setName] = useState(pointOfSale?.name ?? "");
+  const [code, setCode] = useState(pointOfSale?.code ?? "");
+  const [telephone, setTelephone] = useState(pointOfSale?.telephone ?? "");
+  const [address, setAddress] = useState(pointOfSale?.address ?? "");
 
   const [errors, setErrors] = useState<{
     name?: string;
@@ -53,24 +53,6 @@ const PointOfSaleFormModal = ({
   }>({});
 
   const isSubmitting = isCreating || isUpdating;
-
-  useEffect(() => {
-    if (!visible) return;
-
-    if (pointOfSale) {
-      setName(pointOfSale.name);
-      setCode(pointOfSale.code);
-      setTelephone(pointOfSale.telephone ?? "");
-      setAddress(pointOfSale.address ?? "");
-    } else {
-      setName("");
-      setCode("");
-      setTelephone("");
-      setAddress("");
-    }
-
-    setErrors({});
-  }, [visible, pointOfSale]);
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -398,7 +380,7 @@ const styles = StyleSheet.create({
   },
 
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.42)",
   },
 

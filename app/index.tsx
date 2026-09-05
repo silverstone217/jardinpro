@@ -5,7 +5,7 @@ import { COLORS, fonts, typography } from "@/utils/styles";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import * as Haptics from "expo-haptics";
 import { Redirect, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -26,9 +26,9 @@ export default function Index() {
 
   const [index, setIndex] = useState(0);
 
-  const imageOpacity = useRef(new Animated.Value(1)).current;
-  const contentOpacity = useRef(new Animated.Value(1)).current;
-  const contentTranslate = useRef(new Animated.Value(0)).current;
+  const [imageOpacity] = useState(() => new Animated.Value(1));
+  const [contentOpacity] = useState(() => new Animated.Value(1));
+  const [contentTranslate] = useState(() => new Animated.Value(0));
 
   const current = OnboardingData[index];
   const isLast = index === OnboardingData.length - 1;
