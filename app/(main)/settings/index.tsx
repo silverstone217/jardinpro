@@ -259,11 +259,19 @@ const SettingItem = ({ link, isLast, onPress }: SettingItemProps) => {
           },
         ]}
       >
-        <Feather
-          name={link.icon as React.ComponentProps<typeof Feather>["name"]}
-          size={18}
-          color={colors.icon}
-        />
+        {!link.value.includes("packaging") ? (
+          <Feather
+            name={link.icon as React.ComponentProps<typeof Feather>["name"]}
+            size={18}
+            color={colors.icon}
+          />
+        ) : (
+          <MaterialCommunityIcons
+            name="bottle-soda"
+            size={30}
+            color={colors.icon}
+          />
+        )}
       </View>
 
       {/* CONTENT */}
