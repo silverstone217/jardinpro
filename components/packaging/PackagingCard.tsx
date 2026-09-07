@@ -27,7 +27,7 @@ const PackagingCard = ({
       <View style={styles.cardHeader}>
         <View style={styles.cardIcon}>
           <MaterialCommunityIcons
-            name="bottle-soda"
+            name="bottle-soda-classic-outline"
             size={38}
             color={COLORS.primary}
           />

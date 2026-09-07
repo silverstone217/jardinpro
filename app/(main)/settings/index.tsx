@@ -267,7 +267,7 @@ const SettingItem = ({ link, isLast, onPress }: SettingItemProps) => {
           />
         ) : (
           <MaterialCommunityIcons
-            name="bottle-soda"
+            name="bottle-soda-classic-outline"
             size={30}
             color={colors.icon}
           />
